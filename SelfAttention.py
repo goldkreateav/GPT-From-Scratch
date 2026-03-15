@@ -58,14 +58,14 @@ class CasualAttention(nn.Module):
         attn_weights = self.dropout(attn_weights)
         return attn_weights @ values
 
-class MultiHeadAttensionWrapper(nn.Module):
+class MultiHeadAttentionWrapper(nn.Module):
     def __init__(self, d_in, d_out, context_length, dropout, num_head, qkv_bias=False):
         super().__init__()
         self.heads = nn.ModuleList([CasualAttention(d_in, d_out, context_length, dropout, qkv_bias) for _ in range(num_head)])
     def forward(self, x):
         return torch.cat([head(x) for head in self.heads], dim=-1)
 
-class MultiHeadAttension(nn.Module):
+class MultiHeadAttention(nn.Module):
     def __init__(self, d_in, d_out, context_length, dropout, num_heads, qkv_bias=False):
         super().__init__()
         assert (d_out % num_heads == 0), "d_out must be divisible by num_heads"
