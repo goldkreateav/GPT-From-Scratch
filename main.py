@@ -13,6 +13,16 @@ def create_dataloader_v1(txt, batch_size=4, max_length=256, stride=128,
                             drop_last=drop_last, num_workers=num_workers)
     
     return dataloader 
+def generate_text_simple(model, idx, max_new_tokens, context_size):
+    for _ in range(max_new_tokens):
+        idx_cont = idx[:, -context_size:]
+        with torch.no_grad():
+            logits = model(idx_cont)
+        logits = logits[:, -1, :]
+        probas = torch.softmax(logits, dim=-1)
+        idx_next = torch.argmax(probas, dim=-1, keepdim=True)
+        idx = torch.cat((idx, idx_next), dim=-1)
+    return idx
 f = open("the-verdict.txt", "r")
 text = f.read()
 
@@ -25,8 +35,5 @@ text_2 = "Every day holds a"
 batch.append(torch.tensor(data_loader.dataset.tokenizer.encode(text_1)))
 batch.append(torch.tensor(data_loader.dataset.tokenizer.encode(text_2)))
 batch = torch.stack(batch, dim=0)
-torch.manual_seed(123)
 model = GPTModel(GPT_CONFIG_124M)
-logits = model(batch)
-print(logits.shape)
-print(logits)
+print([data_loader.dataset.tokenizer.decode(x.flatten().tolist()) for x in list(generate_text_simple(model, batch, 10, 4))])
